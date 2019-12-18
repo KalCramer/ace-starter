@@ -5,8 +5,10 @@ import Map from 'ol/Map';
 import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
-import LayerVector from 'ol/layer/Vector';
-import SourceVector from 'ol/source/Vector';
+import VectorLayer from 'ol/layer/Vector';
+import GeoJSON from 'ol/format/GeoJSON';
+import {OSM, Vector as VectorSource} from 'ol/source';
+import {fromLonLat} from 'ol/proj';
 
 import Feature from 'ol/Feature';
 import Polygon from 'ol/geom/Polygon';
@@ -19,36 +21,40 @@ class MapWrapper extends Component {
         this.state = {}
     }
 
+
+
   componentDidMount() {
 
+    // create initial map layer
+    var raster = new TileLayer({
+    source: new XYZ({
+                url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+              })
+    });
+
     // create feature layer and vector source
-    var featuresLayer = new LayerVector({
-      source: new SourceVector({
-        features:[]
+    var vectorLayer = new VectorLayer({
+      source: new VectorSource({
+        features: []
       })
     });
 
     // create map object with feature layer
      new Map({
       target: 'map',
-      layers: [
-        new TileLayer({
-          source: new XYZ({
-            url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-          })
-        })
-      ],
+      layers: [raster, vectorLayer],
       view: new View({
         center: [0, 0],
         zoom: 2
       })
+
     });
         this.setState({
           map: map,
-          featuresLayer: featuresLayer
+          vectorLayer: vectorLayer
         });
 
-}
+    }
 /*
     map.on('click', this.handleMapClick.bind(this));
 */
@@ -60,18 +66,22 @@ class MapWrapper extends Component {
 
   // pass new features from props into the OpenLayers layer object
   componentDidUpdate(prevProps, prevState) {
-    console.log(this.props.routes)
-    var feature = new Feature({
-      geometry: new Point([0, 0]),
-      color: 'red',
-      labelPoint: new Point([0,0]),
-      name: 'My Polygon'
-    });
-    this.state.featuresLayer.setSource(
-      new SourceVector({
-        features: [feature]//this.props.routes
-      })
-    );
+    var myJSONObject = this.props.routes[0]
+    console.log(33.46637725830078 * (Math.PI/180))
+    if(myJSONObject != undefined) {
+        console.log(myJSONObject['latitude'] * (Math.PI/180))
+        console.log(myJSONObject['latitude'])
+        console.log(myJSONObject['longitude'])
+        var feature = new Feature({
+              geometry: new Point(fromLonLat([myJSONObject['longitude'], myJSONObject['latitude']])),
+              name: 'Null Island',
+              population: 4000,
+              rainfall: 500
+        });
+            this.state.vectorLayer.setSource(new VectorSource({
+                                                     features: [feature]
+                                                   }));
+    }
   }
 
 
