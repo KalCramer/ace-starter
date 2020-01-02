@@ -13,6 +13,14 @@ import {fromLonLat} from 'ol/proj';
 import Feature from 'ol/Feature';
 import Polygon from 'ol/geom/Polygon';
 import Point from 'ol/geom/Point';
+import LineString from 'ol/geom/LineString';
+
+import Style from 'ol/style/Style';
+import Circle from 'ol/style/Circle';
+import Fill from 'ol/style/Fill';
+import Stroke from 'ol/style/Stroke';
+
+
 
 class MapWrapper extends Component {
     constructor(props){
@@ -50,7 +58,8 @@ class MapWrapper extends Component {
     });
         this.setState({
           map: map,
-          vectorLayer: vectorLayer
+          vectorLayer: vectorLayer,
+          colorMap: {}
         });
 
     }
@@ -59,14 +68,67 @@ class MapWrapper extends Component {
         console.log("add", route)
          var feature = new Feature({
                geometry: new Point(fromLonLat([route['longitude'], route['latitude']])),
-               name: 'Null Island',
-               population: 4000,
-               rainfall: 500
          });
-             this.state.vectorLayer.getSource().addFeature(feature)
-             /*this.state.vectorLayer.setSource(new VectorSource({
-                                                      features: [feature]
-                                                    }));*/
+          feature.setId(route['missionId'])
+
+var color= this.state.colorMap[route['missionId']]
+             if(color == undefined) {
+         var num = Math.round(0xffffff * Math.random());
+         var r = num >> 16;
+         var g = num >> 8 & 255;
+         var b = num & 255;
+         var color = 'rgb(' + r + ', ' + g + ', ' + b + ')'
+                   var style = new Style({
+                      image: new Circle({
+                        radius: 7,
+                        fill: new Fill({color: color}),
+                        stroke: new Stroke({
+                          color: 'black', width: 2
+                        })
+                      })
+                    })
+        this.state.colorMap[route['missionId']]=style
+}else{
+var style = this.state.colorMap[route['missionId']]
+var color=color.getImage().getFill().getColor()
+}
+
+
+         feature.setStyle(style);
+         var v = this.state.vectorLayer.getSource().getFeatureById(route['missionId'])
+             if(v != undefined) {
+         this.state.vectorLayer.getSource().removeFeature(v)
+         }
+         this.state.vectorLayer.getSource().addFeature(feature)
+
+
+
+         //add line
+
+var line =  this.state.vectorLayer.getSource().getFeatureById(route['missionId']+'-line')
+    if(line != undefined) {
+        var geo=line.getGeometry()
+        geo.appendCoordinate(fromLonLat([route['longitude'], route['latitude']]));
+        return;
+}
+          var line = new Feature({
+                        geometry: new LineString( [fromLonLat([route['longitude'], route['latitude']])]
+),
+                  });
+          line.setId(route['missionId']+'-line')
+
+          var lineStyle = new Style({
+            stroke: new Stroke({
+              color: color,
+              width: 2
+            })
+          });
+                             line.setStyle(lineStyle);
+
+         this.state.vectorLayer.getSource().addFeature(line)
+
+
+
  }
 
   // pass new features from props into the OpenLayers layer object
@@ -112,7 +174,7 @@ class App extends Component {
           }
 
           componentDidMount() {
-            this.interval = setInterval(() => this.tick(), 2000);
+            this.interval = setInterval(() => this.tick(), 500);
           }
 
           componentWillUnmount() {
