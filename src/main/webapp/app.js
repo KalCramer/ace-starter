@@ -25,7 +25,6 @@ class MapWrapper extends Component {
 
   componentDidMount() {
 
-    // create initial map layer
     var raster = new TileLayer({
     source: new XYZ({
                 url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png'
@@ -55,54 +54,28 @@ class MapWrapper extends Component {
         });
 
     }
-/*
-    map.on('click', this.handleMapClick.bind(this));
-*/
 
-    // save map and layer references to local state
-
-  //}
-
+ addFeature(route){
+        console.log("add", route)
+         var feature = new Feature({
+               geometry: new Point(fromLonLat([route['longitude'], route['latitude']])),
+               name: 'Null Island',
+               population: 4000,
+               rainfall: 500
+         });
+             this.state.vectorLayer.getSource().addFeature(feature)
+             /*this.state.vectorLayer.setSource(new VectorSource({
+                                                      features: [feature]
+                                                    }));*/
+ }
 
   // pass new features from props into the OpenLayers layer object
   componentDidUpdate(prevProps, prevState) {
-    var myJSONObject = this.props.routes[0]
-    console.log(33.46637725830078 * (Math.PI/180))
-    if(myJSONObject != undefined) {
-        console.log(myJSONObject['latitude'] * (Math.PI/180))
-        console.log(myJSONObject['latitude'])
-        console.log(myJSONObject['longitude'])
-        var feature = new Feature({
-              geometry: new Point(fromLonLat([myJSONObject['longitude'], myJSONObject['latitude']])),
-              name: 'Null Island',
-              population: 4000,
-              rainfall: 500
-        });
-            this.state.vectorLayer.setSource(new VectorSource({
-                                                     features: [feature]
-                                                   }));
+    var routes = this.props.routes
+    if(routes != undefined) {
+        routes.map(this.addFeature, {state: this.state});
     }
   }
-
-
-/*  handleMapClick(event) {
-
-   *//* // create WKT writer
-    var wktWriter = new ol.format.WKT();
-
-    // derive map coordinate (references map from Wrapper Component state)
-    var clickedCoordinate = this.state.map.getCoordinateFromPixel(event.pixel);
-
-    // create Point geometry from clicked coordinate
-    var clickedPointGeom = new ol.geom.Point( clickedCoordinate );
-
-    // write Point geometry to WKT with wktWriter
-    var clickedPointWkt = wktWriter.writeGeometry( clickedPointGeom );
-
-    // place Flux Action call to notify Store map coordinate was clicked
-    Actions.setRoutingCoord( clickedPointWkt );*//*
-
-  }*/
 
   render () {
     return (
@@ -119,8 +92,9 @@ class App extends Component {
     };
     }
 
-    componentDidMount() {
 
+
+  tick() {
     fetch('/services/healthstatus/pulse/v1/status/sensor/geo',
         {method:'GET', credentials: 'same-origin', cache: 'no-cache',
          headers: {
@@ -134,7 +108,17 @@ class App extends Component {
                 this.setState({ contacts: data })
             })
             .catch(console.log)
-    }
+
+          }
+
+          componentDidMount() {
+            this.interval = setInterval(() => this.tick(), 2000);
+          }
+
+          componentWillUnmount() {
+            clearInterval(this.interval);
+          }
+
 
 /*
                 <Contacts contacts={this.state.contacts} map={this.props.map} />
