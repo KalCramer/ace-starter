@@ -10,7 +10,7 @@ import TablePagination from '@material-ui/core/TablePagination'
 import TableRow from '@material-ui/core/TableRow'
 
 interface Column {
-  id: 'color' | 'missionId' | 'streamId' | 'location' | 'size' | 'density';
+  id: 'color' | 'missionId' | 'streamId' | 'location' | 'currentScene';
   label: string;
   minWidth?: number;
   align?: 'right';
@@ -28,16 +28,10 @@ const columns: Column[] = [
     format: (value: number) => value.toLocaleString(),
   },
   {
-    id: 'size',
-    label: 'Size\u00a0(km\u00b2)',
+    id: 'currentScene',
+    label: 'Current Scene',
     minWidth: 170,
     format: (value: number) => value.toLocaleString(),
-  },
-  {
-    id: 'density',
-    label: 'Density',
-    minWidth: 170,
-    format: (value: number) => value.toFixed(2),
   },
 ]
 
@@ -45,9 +39,8 @@ interface Data {
   color: string;
   missionId: string;
   streamId: string;
-  location: String;
-  size: number;
-  density: number;
+  location: string;
+  currentScene: string;
 }
 
 function createData(
@@ -55,10 +48,9 @@ function createData(
   missionId: string,
   streamId: string,
   location: string,
-  size: number
+  currentScene: string
 ): Data {
-  const density = 14
-  return { color, missionId, streamId, location, size, density }
+  return { color, missionId, streamId, location, currentScene }
 }
 
 const useStyles = makeStyles({
@@ -72,7 +64,10 @@ const useStyles = makeStyles({
 
 export default function StickyHeadTable(props) {
   function addRow(route) {
-    console.log(this.status)
+    console.log('status', this.status)
+    var scene = this.status.filter(function(user) {
+      return user.streamId === route.streamId
+    })[0]['currentScene']
     return createData(
       route['color'],
       route['missionId'],
@@ -84,14 +79,14 @@ export default function StickyHeadTable(props) {
         ', ' +
         route['altitude'] +
         ')',
-      Math.random()
+      'Scene ' + scene
     )
   }
 
   var rows = []
   var routes = props.routes
   var status = props.status
-  if (routes != undefined) {
+  if (routes != undefined && status != undefined) {
     rows = routes.map(addRow, { status })
     console.log(rows)
   }
