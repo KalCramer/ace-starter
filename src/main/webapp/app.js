@@ -51,7 +51,6 @@ class MapWrapper extends Component {
     this.setState({
       map: map,
       vectorLayer: vectorLayer,
-      colorMap: {},
     })
   }
 
@@ -62,31 +61,11 @@ class MapWrapper extends Component {
     })
     feature.setId(route['missionId'])
 
-    var style = this.state.colorMap[route['missionId']]
-    if (style == undefined) {
-      var num = Math.round(0xffffff * Math.random())
-      var r = num >> 16
-      var g = (num >> 8) & 255
-      var b = num & 255
-      var color = 'rgb(' + r + ', ' + g + ', ' + b + ')'
-      var style = new Style({
-        image: new Circle({
-          radius: 7,
-          fill: new Fill({ color: color }),
-          stroke: new Stroke({
-            color: 'black',
-            width: 2,
-          }),
-        }),
-      })
-      this.state.colorMap[route['missionId']] = style
-    } else {
-      var style = this.state.colorMap[route['missionId']]
-      var color = style
-        .getImage()
-        .getFill()
-        .getColor()
-    }
+    var style = route['style']
+    var color = style
+      .getImage()
+      .getFill()
+      .getColor()
 
     feature.setStyle(style)
     var oldPoint = this.state.vectorLayer
@@ -143,7 +122,48 @@ class App extends Component {
     super(props)
     this.state = {
       routes: [],
+      colorMap: [],
     }
+  }
+
+  addColor(route) {
+    var style = this.state.colorMap[route['missionId']]
+    if (style == undefined) {
+      var num = Math.round(0xffffff * Math.random())
+      var r = num >> 16
+      var g = (num >> 8) & 255
+      var b = num & 255
+      var color = 'rgb(' + r + ', ' + g + ', ' + b + ')'
+      var style = new Style({
+        image: new Circle({
+          radius: 7,
+          fill: new Fill({ color: color }),
+          stroke: new Stroke({
+            color: 'black',
+            width: 2,
+          }),
+        }),
+      })
+      this.state.colorMap[route['missionId']] = style
+    } else {
+      var style = this.state.colorMap[route['missionId']]
+    }
+    var color = style
+      .getImage()
+      .getFill()
+      .getColor()
+    route['style'] = style
+    route['color'] = color
+    return route
+  }
+
+  roundPosition(route) {
+    var roundToThreeDecimal = num => Math.round(num * 100) / 100
+
+    route['latitude'] = roundToThreeDecimal(route['latitude'])
+    route['longitude'] = roundToThreeDecimal(route['longitude'])
+    route['altitude'] = roundToThreeDecimal(route['altitude'])
+    return route
   }
 
   tick() {
@@ -159,7 +179,27 @@ class App extends Component {
       .then(res => res.json())
       .then(data => {
         console.log(data)
+        if (data != undefined) {
+          data.map(this.addColor, { state: this.state })
+          data.map(this.roundPosition, { state: this.state })
+        }
         this.setState({ routes: data })
+      })
+      .catch(console.log)
+
+    fetch('/services/healthstatus/pulse/v1/status/sensor/mission-status', {
+      method: 'GET',
+      credentials: 'same-origin',
+      cache: 'no-cache',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        Authorization: 'Basic ' + 'YWRtaW46YWRtaW4=',
+      },
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log(data)
+        this.setState({ status: data })
       })
       .catch(console.log)
   }
@@ -175,15 +215,12 @@ class App extends Component {
   render() {
     return (
       <div>
-            <div style={{height: "60%"}}>
-
-        <MapWrapper routes={this.state.routes} />
-              </div>
-            <div style={{height: "35%"}}>
-
-        <RouteTable routes={this.state.routes}  />
-              </div>
-
+        <div style={{ height: '60%' }}>
+          <MapWrapper routes={this.state.routes} />
+        </div>
+        <div style={{ height: '35%' }}>
+          <RouteTable routes={this.state.routes} status={this.state.status} />
+        </div>
       </div>
     )
   }

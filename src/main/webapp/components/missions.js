@@ -1,16 +1,16 @@
-import React from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import Paper from '@material-ui/core/Paper';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
-import TableHead from '@material-ui/core/TableHead';
-import TablePagination from '@material-ui/core/TablePagination';
-import TableRow from '@material-ui/core/TableRow';
+import React from 'react'
+import { makeStyles } from '@material-ui/core/styles'
+import Paper from '@material-ui/core/Paper'
+import Table from '@material-ui/core/Table'
+import TableBody from '@material-ui/core/TableBody'
+import TableCell from '@material-ui/core/TableCell'
+import TableContainer from '@material-ui/core/TableContainer'
+import TableHead from '@material-ui/core/TableHead'
+import TablePagination from '@material-ui/core/TablePagination'
+import TableRow from '@material-ui/core/TableRow'
 
 interface Column {
-  id: 'name' | 'code' | 'population' | 'size' | 'density';
+  id: 'color' | 'missionId' | 'streamId' | 'location' | 'size' | 'density';
   label: string;
   minWidth?: number;
   align?: 'right';
@@ -18,50 +18,48 @@ interface Column {
 }
 
 const columns: Column[] = [
-  { id: 'name', label: 'Name', minWidth: 170 },
-  { id: 'code', label: 'ISO\u00a0Code', minWidth: 100 },
+  { id: 'color', label: 'Color', minWidth: 30 },
+  { id: 'missionId', label: 'Mission ID', minWidth: 170 },
+  { id: 'streamId', label: 'Stream ID', minWidth: 100 },
   {
-    id: 'population',
-    label: 'Population',
+    id: 'location',
+    label: 'Location (Lat, Lon, Alt)',
     minWidth: 170,
-    align: 'right',
     format: (value: number) => value.toLocaleString(),
   },
   {
     id: 'size',
     label: 'Size\u00a0(km\u00b2)',
     minWidth: 170,
-    align: 'right',
     format: (value: number) => value.toLocaleString(),
   },
   {
     id: 'density',
     label: 'Density',
     minWidth: 170,
-    align: 'right',
     format: (value: number) => value.toFixed(2),
   },
-];
+]
 
 interface Data {
-  name: string;
-  code: string;
-  population: number;
+  color: string;
+  missionId: string;
+  streamId: string;
+  location: String;
   size: number;
   density: number;
 }
 
-function createData(name: string, code: string, population: number, size: number): Data {
-  const density = population / size;
-  return { name, code, population, size, density };
+function createData(
+  color: string,
+  missionId: string,
+  streamId: string,
+  location: string,
+  size: number
+): Data {
+  const density = 14
+  return { color, missionId, streamId, location, size, density }
 }
-
-/*const rows = [
-  createData('India', 'IN', 1324171354, 3287263),
-  createData('China', 'CN', 1403500365, 9596961),
-  createData('Italy', 'IT', 60483973, 301340),
-  createData('United States', 'US', 327167434, 9833520),
-];*/
 
 const useStyles = makeStyles({
   root: {
@@ -70,36 +68,48 @@ const useStyles = makeStyles({
   container: {
     maxHeight: '100%',
   },
-});
-
+})
 
 export default function StickyHeadTable(props) {
+  function addRow(route) {
+    console.log(this.status)
+    return createData(
+      route['color'],
+      route['missionId'],
+      route['streamId'],
+      '(' +
+        route['latitude'] +
+        ', ' +
+        route['longitude'] +
+        ', ' +
+        route['altitude'] +
+        ')',
+      Math.random()
+    )
+  }
 
-  const addRow = (route: unknown) => {
-return                 createData(route['missionId'], route['streamId'], 1324171354, 3287263)
+  var rows = []
+  var routes = props.routes
+  var status = props.status
+  if (routes != undefined) {
+    rows = routes.map(addRow, { status })
+    console.log(rows)
+  }
 
-  };
-
-    var rows =  [];
-    var routes = props.routes
-    if (routes != undefined) {
-     rows = routes.map(addRow)
-     console.log(rows)
-    }
-
-
-   const classes = useStyles();
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const classes = useStyles()
+  const [page, setPage] = React.useState(0)
+  const [rowsPerPage, setRowsPerPage] = React.useState(10)
 
   const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
+    setPage(newPage)
+  }
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(+event.target.value);
-    setPage(0);
-  };
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setRowsPerPage(+event.target.value)
+    setPage(0)
+  }
 
   return (
     <Paper className={classes.root}>
@@ -119,20 +129,32 @@ return                 createData(route['missionId'], route['streamId'], 1324171
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(row => {
-              return (
-                <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
-                  {columns.map(column => {
-                    const value = row[column.id];
-                    return (
-                      <TableCell key={column.id} align={column.align}>
-                        {column.format && typeof value === 'number' ? column.format(value) : value}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              );
-            })}
+            {rows
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              .map(row => {
+                return (
+                  <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
+                    {columns.map(column => {
+                      const value = row[column.id]
+                      return (
+                        <TableCell key={column.id} align={column.align}>
+                          <div
+                            style={{
+                              width: '30px',
+                              height: '30px',
+                              backgroundColor: row[column.id],
+                            }}
+                          />
+
+                          {column.format && typeof value === 'number'
+                            ? column.format(value)
+                            : value}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                )
+              })}
           </TableBody>
         </Table>
       </TableContainer>
@@ -146,5 +168,5 @@ return                 createData(route['missionId'], route['streamId'], 1324171
         onChangeRowsPerPage={handleChangeRowsPerPage}
       />
     </Paper>
-  );
+  )
 }
