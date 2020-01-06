@@ -55,7 +55,7 @@ class MapWrapper extends Component {
   }
 
   addFeature(route) {
-    console.log('add', route)
+    //console.log('add feature', route)
     var feature = new Feature({
       geometry: new Point(fromLonLat([route['longitude'], route['latitude']])),
     })
@@ -178,7 +178,7 @@ class App extends Component {
     })
       .then(res => res.json())
       .then(data => {
-        console.log(data)
+        //console.log('geo',data)
         if (data != undefined) {
           data.map(this.addColor, { state: this.state })
           data.map(this.roundPosition, { state: this.state })
@@ -198,7 +198,7 @@ class App extends Component {
     })
       .then(res => res.json())
       .then(data => {
-        console.log(data)
+        // console.log('mission-status',data)
         this.setState({ status: data })
       })
       .catch(console.log)

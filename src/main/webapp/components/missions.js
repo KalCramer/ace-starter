@@ -64,10 +64,15 @@ const useStyles = makeStyles({
 
 export default function StickyHeadTable(props) {
   function addRow(route) {
-    console.log('status', this.status)
+    //console.log('row status', this.status)
     var scene = this.status.filter(function(user) {
       return user.streamId === route.streamId
-    })[0]['currentScene']
+    })
+
+    if (scene != undefined && scene[0] != undefined) {
+      scene = scene[0]['currentScene']
+    }
+
     return createData(
       route['color'],
       route['missionId'],
@@ -88,7 +93,7 @@ export default function StickyHeadTable(props) {
   var status = props.status
   if (routes != undefined && status != undefined) {
     rows = routes.map(addRow, { status })
-    console.log(rows)
+    //console.log('table status' rows)
   }
 
   const classes = useStyles()
